@@ -1,0 +1,14 @@
+<%- layout("boilerplate.ejs") %>
+
+<form action="/goals" method="POST" class="container mt-5 col-12 col-sm-10 col-md-8 col-lg-6 col-xl-4 mx-auto border shadow-sm rounded p-4 bg-light">
+  <h2 class="text-center mb-4 text-success">Set Your Goal</h2>
+  <div class="form-group">
+    <label for="form-text" class="font-weight-bold">Goal</label>
+    <input type="text" class="form-control border-success" placeholder="Add Goal" id="form-text" name="title">
+  </div>
+  <div class="form-group mt-3">
+    <label for="exampleFormControlTextarea1" class="font-weight-bold">Why is it Important</label>
+    <textarea class="form-control border-success" id="exampleFormControlTextarea1" rows="3" name="why" placeholder="Why is it Important"></textarea>
+  </div>
+  <button type="submit" class="btn btn-success mt-3 w-100">Add Goal</button>
+</form>

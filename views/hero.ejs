@@ -1,0 +1,17 @@
+<%- layout("boilerplate.ejs") %>
+<div class="hero-section mt-sm-2 mt-lg-4 mt-md-3 pt-md-3 pt-sm-2 pt-lg-4">
+  <div class="hero-content">
+    <h1 class="hero-title">Welcome <%= newUser.username %></h1>
+    <div class="quote-section card">
+      <p class="card-title">Quote of The Day</p>
+      <p class="quote card-text"></p>
+      <p class="author card-text"></p>
+    </div>
+    <a href="/goals"
+      ><button class="btn btn-outline-success btn-lg hero-button">
+        Set Goal
+      </button></a
+    ><br />
+  </div>
+</div>
+<script src="quote.js"></script>
