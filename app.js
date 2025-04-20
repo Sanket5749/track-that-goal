@@ -9,16 +9,15 @@ const engine = require("ejs-mate");
 const session = require("express-session");
 const flash = require("connect-flash");
 const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const User = require("./models/user");
-const LocalStrategy = require("passport-local");
 const Goal = require("./models/goal");
 const methodOverride = require("method-override");
+const bodyParser = require("body-parser");
 const http = require("http");
 const nodemailer = require("nodemailer");
-const bodyParser = require("body-parser");
 
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(methodOverride("_method"));
 
 main()
@@ -49,14 +48,51 @@ const sessionOptions = {
 };
 
 app.use(session(sessionOptions));
-
 app.use(flash());
 
 app.use(passport.initialize());
 app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
+
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await User.findOne({ googleId: profile.id });
+
+        if (!user) {
+          user = new User({
+            googleId: profile.id,
+            username: profile.displayName,
+            email: profile.emails[0].value,
+          });
+          await user.save();
+        }
+
+        done(null, user);
+      } catch (err) {
+        done(err, null);
+      }
+    }
+  )
+);
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
+});
 
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
@@ -82,9 +118,23 @@ const isLoggedIn = (req, res, next) => {
   res.redirect("/login");
 };
 
-app.get("/hero", isLoggedIn, (req, res) => {
-  res.render("hero.ejs", { newUser: req.user });
-});
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: "/login",
+    failureFlash: true,
+  }),
+  (req, res) => {
+    console.log("Redirecting to /hero after Google login");
+    req.flash("success", "Successfully logged in with Google!");
+    res.redirect("/hero");
+  }
+);
 
 app.get("/signup", (req, res) => {
   res.render("signup.ejs");
@@ -97,51 +147,10 @@ app.post("/signup", async (req, res) => {
 
     const registeredUser = await User.register(newUser, password);
 
-    let emailSent = false;
-    let attempt = 0;
-    const maxRetries = 5;
-
-    while (!emailSent && attempt < maxRetries) {
-      try {
-        attempt++;
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          secure: true,
-          port: 465,
-          auth: {
-            user: "trackthatgoal@gmail.com",
-            pass: process.env.PAAS_KEY,
-          },
-        });
-        const mailOptions = {
-          from: "trackthatgoal@gmail.com",
-          to: email,
-          subject: "Email Verification",
-          text: "You are successfully verified!",
-        };
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-      } catch (emailError) {
-        console.error(`Attempt ${attempt} failed:`, emailError.message);
-
-        if (attempt >= maxRetries) {
-          await User.findByIdAndDelete(registeredUser._id);
-          req.flash(
-            "error",
-            "Signup failed as the email could not be sent. Please try again."
-          );
-          return res.redirect("/signup");
-        }
-      }
-    }
-    req.flash(
-      "success",
-      "Signup successful! Please verify your email before logging in."
-    );
+    req.flash("success", "Signup successful! Please log in.");
     res.redirect("/login");
   } catch (err) {
     console.error(err);
-
     req.flash("error", "Signup failed. Please try again.");
     res.redirect("/signup");
   }
@@ -162,7 +171,6 @@ app.post(
     res.redirect("/hero");
   }
 );
-
 app.post("/logout", (req, res) => {
   req.logout((err) => {
     if (err) {
@@ -173,16 +181,10 @@ app.post("/logout", (req, res) => {
   });
 });
 
-app.get("/goals", isLoggedIn, async (req, res) => {
-  try {
-    const goals = await Goal.find({ userId: req.user._id });
-    res.render("goals.ejs", { goals, newUser: req.user });
-  } catch (err) {
-    console.error(err);
-    req.flash("error", "Failed to fetch goals");
-    res.redirect("/dashboard");
-  }
+app.get("/hero", isLoggedIn, (req, res) => {
+  res.render("hero.ejs", { newUser: req.user });
 });
+
 app.post("/goals", isLoggedIn, async (req, res) => {
   try {
     const { title, why } = req.body;
@@ -193,11 +195,44 @@ app.post("/goals", isLoggedIn, async (req, res) => {
     });
     await newGoal.save();
     req.flash("success", "New Goal Created");
+    const transport = nodemailer.createTransport({
+      service: "gmail",
+      secure: true,
+      port: 465,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: req.user.email,
+      subject: "New Goal Created",
+      text: `You have created a new goal: ${title}. Why: ${why}. Stay focused, my friend, because dreams with a plan turn into unstoppable achievements! 🌟🚀`,
+    };
+    transport.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error.message);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
     res.redirect("/dashboard");
   } catch (err) {
     console.error(err);
     req.flash("error", "Failed to create goal");
     res.redirect("/goals");
+  }
+});
+
+app.get("/goals", isLoggedIn, async (req, res) => {
+  try {
+    const goals = await Goal.find({ userId: req.user._id });
+    res.render("goals.ejs", { goals, newUser: req.user });
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Failed to fetch goals");
+    res.redirect("/dashboard");
   }
 });
 
@@ -218,8 +253,36 @@ app.get("/dashboard", isLoggedIn, async (req, res) => {
 app.delete("/dashboard", isLoggedIn, async (req, res) => {
   try {
     const goalId = req.body.goalId;
+    const goal = await Goal.findById(goalId);
+    if (!goal) {
+      req.flash("error", "Goal not found!");
+      return res.redirect("/dashboard");
+    }
     await Goal.findByIdAndDelete(goalId);
     req.flash("success", "Goal deleted successfully");
+    const transport = nodemailer.createTransport({
+      service: "gmail",
+      secure: true,
+      port: 465,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: req.user.email,
+      subject: "Goal Deleted",
+      text: `The goal titled "${goal.title}" has been successfully deleted. But remember, my friend, every reset is just a chance to recharge—you're unstoppable, and your dreams are just warming up! 🌟💪
+`,
+    };
+    transport.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error.message);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
     res.redirect("/dashboard");
   } catch (err) {
     console.error("Error during deletion:", err.message);
@@ -228,15 +291,54 @@ app.delete("/dashboard", isLoggedIn, async (req, res) => {
   }
 });
 
+app.get("/hero", isLoggedIn, async (req, res) => {
+  try {
+    const goals = await Goal.find({ userId: req.user._id });
+    res.render("hero.ejs", { newUser: req.user, goals });
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Failed to fetch goals");
+    res.redirect("/dashboard");
+  }
+});
+
 app.delete("/hero", isLoggedIn, async (req, res) => {
   try {
     const goalId = req.body.goalId;
+    const goal = await Goal.findById(goalId);
+    if (!goal) {
+      req.flash("error", "Goal not found!");
+      return res.redirect("/hero");
+    }
     await Goal.findByIdAndDelete(goalId);
     req.flash("success", "Goal successfully completed");
+    const transport = nodemailer.createTransport({
+      service: "gmail",
+      secure: true,
+      port: 465,
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: req.user.email,
+      subject: "Goal Completed!",
+      text: `Congratulations! Your goal titled "${goal.title}" has been successfully marked as completed. This is a big step forward, my friend—keep crushing it and chasing greatness like the champion you are! 🚀✨
+`,
+    };
+    transport.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Error sending email:", error.message);
+      } else {
+        console.log("Email sent:", info.response);
+      }
+    });
     res.redirect("/hero");
   } catch (err) {
-    console.error("Error during Completion:", err.message);
-    req.flash("error", "Failed to Complete goal.");
+    console.error("Error during completion:", err.message);
+    req.flash("error", "Failed to complete goal.");
     res.redirect("/dashboard");
   }
 });

@@ -2,34 +2,45 @@
 
 <div class="container my-4">
   <% if (latestGoal) { %>
-    <div class="card text-center mt-4 bg-light">
-      <div class="card-body bg-light">
-        <h2 class="card-title text-success">Your Latest Goal</h2>
-        <p class="card-text"><strong>Goal :</strong> <%= latestGoal.title %></p>
-        <p class="card-text"><strong>Why is it Important :</strong> <%= latestGoal.why %></p>
-        <p class="card-text"><strong>Created At :</strong> <%= latestGoal.createdAt.toDateString() %></p>
-      </div>
-      <div class="card-foot bg-light mb-4">
-        <a href="/hero" class="btn btn-outline-primary btn-md">Home Page</a>
-        <a href="/chart" class="btn btn-outline-primary btn-md">See Your Progress</a>
-        <form action="/hero?_method=DELETE" method="POST" class="d-inline">
-        <button type="submit" class="btn btn-outline-success btn-md">Goal Completed</button>
-        </form>
-        <form action="/dashboard?_method=DELETE" method="POST" class="d-inline">
-          <input type="hidden" name="goalId" value="<%= latestGoal._id %>">
-          <button type="submit" class="btn btn-outline-danger btn-md">Delete Goal</button>
-        </form>
-      </div>
+  <div class="card text-center mt-4 bg-light">
+    <div class="card-body bg-light">
+      <h2 class="card-title text-success">Your Latest Goal</h2>
+      <p class="card-text"><strong>Goal :</strong> <%= latestGoal.title %></p>
+      <p class="card-text">
+        <strong>Why is it Important :</strong> <%= latestGoal.why %>
+      </p>
+      <p class="card-text">
+        <strong>Created At :</strong> <%= latestGoal.createdAt.toDateString() %>
+      </p>
     </div>
+    <div class="card-foot bg-light mb-4">
+      <a href="/hero" class="btn btn-outline-primary btn-md">Home Page</a>
+      <a href="/chart" class="btn btn-outline-primary btn-md"
+        >See Your Progress</a
+      >
+      <form action="/hero?_method=DELETE" method="POST" class="d-inline">
+        <input type="hidden" name="goalId" value="<%= latestGoal._id %>" />
+        <button type="submit" class="btn btn-outline-success btn-md">
+          Goal Completed
+        </button>
+      </form>
+      <form action="/dashboard?_method=DELETE" method="POST" class="d-inline">
+        <input type="hidden" name="goalId" value="<%= latestGoal._id %>" />
+        <button type="submit" class="btn btn-outline-danger btn-md">
+          Delete Goal
+        </button>
+      </form>
+    </div>
+  </div>
   <% } else { %>
-   <div class="card text-center mt-4 bg-light">
-      <div class="card-body bg-light">
-        <h2 class="card-text text-danger">You have not created any goals yet!</h2>
-      </div>
-      <div class="card-foot bg-light mb-4">
-        <a href="/goals" class="btn btn-outline-primary btn-md">Add Goal</a>
-        <a href="/hero" class="btn btn-outline-primary btn-md">Home Page</a>
-      </div>
+  <div class="card text-center mt-4 bg-light">
+    <div class="card-body bg-light">
+      <h2 class="card-text text-danger">You have not created any goals yet!</h2>
     </div>
+    <div class="card-foot bg-light mb-4">
+      <a href="/goals" class="btn btn-outline-primary btn-md">Add Goal</a>
+      <a href="/hero" class="btn btn-outline-primary btn-md">Home Page</a>
+    </div>
+  </div>
   <% } %>
 </div>
