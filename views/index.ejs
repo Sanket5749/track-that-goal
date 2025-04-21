@@ -1,35 +1,37 @@
 <%- layout("boilerplate.ejs") %>
-<main class="container">
+<main class="container-fluid">
   <div class="row align-items-center min-vh-100">
     <div class="col-12 col-md-10 col-lg-6 mx-auto">
-      <h2 class="display-4 fw-bold mb-3 mb-lg-4 text-center text-lg-start">
-        Track Your Goals, <br class="d-none d-lg-block" />Achieve Your Dreams
+      <h2 class="display-4 fw-bold text-center text-lg-start">
+        Track Your Goals, <br class="d-none d-lg-block" /> Achieve Your Dreams
       </h2>
-      <p class="lead mb-4 text-center text-lg-start px-3 px-lg-0">
+      <p class="lead text-center text-lg-start">
         Set, track, and accomplish your goals with our intuitive goal tracking
         platform. Break down your dreams into actionable steps and watch your
         progress unfold.
       </p>
-      <div class="quote-section card mx-3 mx-lg-0 p-3">
-        <p class="card-title h5 mb-3">Quote</p>
+      <div class="quote-section card">
+        <p class="card-title h5">Quote</p>
         <p class="quote card-text"></p>
         <p class="author card-text"></p>
       </div>
       <div
-        class="d-flex flex-column flex-sm-row gap-3 mt-4 mt-lg-5 justify-content-center justify-content-lg-start px-3 px-lg-0"
+        class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start"
       >
-        <a href="/signup" class="w-100 w-sm-auto"
-          ><button class="btn btn-primary btn-lg rounded-pill px-4 w-100">
+        <a href="/signup" class="w-100 w-sm-auto">
+          <button
+            class="btn btn-primary btn-lg rounded-pill w-100"
+          >
             Get Started
-          </button></a
-        >
-        <a href="/learn-more" class="w-100 w-sm-auto"
-          ><button
-            class="btn btn-outline-primary btn-lg rounded-pill px-4 w-100"
+          </button>
+        </a>
+        <a href="/learn-more" class="w-100 w-sm-auto">
+          <button
+            class="btn btn-outline-primary btn-lg rounded-pill w-100"
           >
             Learn More
-          </button></a
-        >
+          </button>
+        </a>
       </div>
     </div>
   </div>

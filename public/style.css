@@ -189,7 +189,6 @@ footer {
   }
 }
 
-/* Responsive Design */
 @media (max-width: 576px) {
   .display-4 {
     font-size: 2.5rem;
@@ -211,12 +210,10 @@ footer {
   }
 }
 
-/* Ensure smooth transitions */
 .btn {
   transition: all 0.3s ease;
 }
 
-/* Better touch targets for mobile */
 @media (max-width: 768px) {
   .btn {
     padding: 0.75rem 1.5rem;
@@ -227,7 +224,6 @@ footer {
   }
 }
 
-/* Optimize layout for tablets */
 @media (min-width: 768px) and (max-width: 991px) {
   .container {
     max-width: 90%;
