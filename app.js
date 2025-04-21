@@ -58,7 +58,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://track-that-goal.onrender.com/auth/google/callback",
+      callbackURL: "/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -342,6 +342,7 @@ app.delete("/hero", isLoggedIn, async (req, res) => {
     res.redirect("/dashboard");
   }
 });
+
 
 app.get("/learn-more", (req, res) => {
   res.render("learn.ejs");
